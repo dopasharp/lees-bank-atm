@@ -1,0 +1,627 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="LEE&#39;S BANK">
+<meta name="theme-color" content="#eef1f5">
+<title>LEE&#39;S BANK ATM</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<style>
+  :root {
+    --bg: #eef1f5;
+    --screen: #ffffff;
+    --ink: #111827;
+    --muted: #6b7280;
+    --line: #e5e7eb;
+    --soft: #f5f7fa;
+    --blue: #2563eb;
+    --blue-soft: #eaf1ff;
+    --red: #dc2626;
+    --green: #16a34a;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--bg); color: var(--ink);
+    font-family: "Pretendard Variable", Pretendard, -apple-system, system-ui, sans-serif;
+    overflow: hidden; letter-spacing: -0.01em;
+    user-select: none; -webkit-user-select: none; touch-action: manipulation;
+  }
+  .machine {
+    position: fixed; inset: 0; display: flex; flex-direction: column;
+    padding: calc(env(safe-area-inset-top) + 40px) calc(env(safe-area-inset-right) + 56px) calc(env(safe-area-inset-bottom) + 40px) calc(env(safe-area-inset-left) + 56px);
+  }
+  .screen-frame {
+    flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: hidden;
+    background: var(--screen); border-radius: 24px;
+    box-shadow: 0 1px 2px rgba(17,24,39,.04), 0 12px 32px rgba(17,24,39,.06);
+  }
+  header.bar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 24px 48px; border-bottom: 1px solid var(--line);
+  }
+  .bank { display: flex; align-items: center; gap: 10px; font-size: 18px; font-weight: 700; }
+  .bank .logo {
+    width: 32px; height: 32px; border-radius: 50%; background: var(--blue); color: #fff;
+    display: grid; place-items: center; font-weight: 800; font-size: 16px;
+  }
+  .clock { font-variant-numeric: tabular-nums; font-size: 16px; color: var(--muted); font-weight: 500; }
+  main { flex: 1; min-height: 0; position: relative; }
+  .view {
+    position: absolute; inset: 0; display: none;
+    flex-direction: column; align-items: center; justify-content: center;
+    padding: 32px 64px; text-align: center;
+  }
+  .view.on { display: flex; animation: in .25s ease-out; }
+  @keyframes in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+  h1 { font-size: clamp(26px, 3.2vw, 36px); font-weight: 700; margin: 0 0 10px; letter-spacing: -0.03em; }
+  .sub { font-size: clamp(15px, 1.7vw, 19px); color: var(--muted); margin: 0 0 36px; line-height: 1.5; }
+  .sub b { color: var(--ink); font-weight: 600; }
+
+  /* 처음 화면 메뉴 */
+  .menu { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; width: min(820px, 100%); }
+  .menu button, .amounts button {
+    font: inherit; color: var(--ink); cursor: pointer; position: relative;
+    background: var(--screen); border: 1.5px solid var(--line); border-radius: 20px;
+    transition: border-color .15s, background .15s, transform .1s;
+  }
+  .menu button {
+    display: flex; align-items: center; gap: 20px; text-align: left;
+    padding: 28px; min-height: 128px;
+  }
+  .menu button:hover, .amounts button:hover { border-color: #c7d2fe; }
+  .menu button:active, .menu button.press, .amounts button:active, .amounts button.press {
+    border-color: var(--blue); background: var(--blue-soft); transform: scale(.985);
+  }
+  .menu .ico {
+    width: 60px; height: 60px; flex: none; border-radius: 16px;
+    background: var(--blue-soft); color: var(--blue); display: grid; place-items: center;
+  }
+  .menu .ico svg { width: 30px; height: 30px; }
+  .menu .t { font-size: clamp(21px, 2.4vw, 26px); font-weight: 700; }
+  .menu .d { font-size: 15px; color: var(--muted); margin-top: 4px; }
+  .key {
+    position: absolute; top: 14px; right: 16px;
+    font-size: 13px; font-weight: 600; color: #9ca3af; font-variant-numeric: tabular-nums;
+  }
+  .hint { margin-top: 32px; font-size: 14px; color: #9ca3af; }
+  .hint kbd {
+    font: inherit; font-weight: 600; color: var(--muted);
+    border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 6px; padding: 1px 7px; background: var(--soft);
+  }
+
+  /* 비밀번호 */
+  .pin-box { display: flex; gap: 22px; margin: 4px 0 24px; }
+  .pin-box span {
+    width: 22px; height: 22px; border-radius: 50%;
+    border: 2px solid #d1d5db; transition: background .12s, border-color .12s, transform .12s;
+    font-size: 0;
+  }
+  .pin-box span.filled { background: var(--blue); border-color: var(--blue); transform: scale(1.08); }
+  .pin-box span.cur { border-color: var(--blue); }
+  .pin-box.err span { border-color: var(--red); }
+  .pin-box.shake { animation: shake .4s; }
+  @keyframes shake { 20%,60% { transform: translateX(-10px); } 40%,80% { transform: translateX(10px); } }
+  .msg { min-height: 24px; font-size: 16px; font-weight: 600; }
+  .msg.err { color: var(--red); }
+  .msg.ok { color: var(--green); }
+
+  /* 카드 투입 */
+  .card-anim { position: relative; width: 240px; height: 190px; margin-bottom: 18px; overflow: hidden; }
+  .card-slot { position: absolute; left: 20px; right: 20px; bottom: 0; height: 22px; border-radius: 11px; background: #d1d5db; z-index: 2; }
+  .card {
+    position: absolute; left: 50%; bottom: 11px; width: 120px; height: 172px; margin-left: -60px;
+    border-radius: 12px; background: linear-gradient(160deg, #3b82f6, var(--blue));
+    animation: insert 2s ease-in-out infinite;
+  }
+  .card i { position: absolute; top: 22px; left: 18px; width: 30px; height: 24px; border-radius: 5px; background: #fcd34d; }
+  @keyframes insert {
+    0%, 15% { transform: translateY(-14px); opacity: 0; }
+    30% { transform: translateY(-14px); opacity: 1; }
+    80% { transform: translateY(120px); opacity: 1; }
+    100% { transform: translateY(120px); opacity: 0; }
+  }
+
+  /* 숫자 입력 */
+  .field {
+    width: min(480px, 90%); min-height: 72px;
+    border-bottom: 2px solid var(--blue); padding: 8px 4px;
+    font-size: clamp(30px, 3.8vw, 42px); font-weight: 700; font-variant-numeric: tabular-nums;
+    display: flex; align-items: center; justify-content: center; gap: 6px; margin-bottom: 14px;
+  }
+  .field .ph { color: #d1d5db; font-weight: 600; }
+  .field .caret { width: 2px; height: .9em; background: var(--blue); animation: blink 1s steps(1) infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  /* 금액 */
+  .amounts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; width: min(820px, 100%); }
+  .amounts button { min-height: 92px; font-size: clamp(19px, 2.2vw, 24px); font-weight: 700; }
+  .amounts .key { top: 10px; left: 14px; right: auto; }
+  .amounts button.all { grid-column: 1 / -1; min-height: 76px; gap: 12px; border-color: #c7d2fe; background: var(--blue-soft); color: var(--blue); display: flex; align-items: center; justify-content: center; }
+  .amounts button.all:active, .amounts button.all.press { background: #dbe6ff; border-color: var(--blue); }
+  .amounts button.all:disabled { opacity: .4; cursor: default; }
+  .all-amt { font-size: .8em; font-weight: 600; opacity: .8; }
+
+  .actions { display: flex; gap: 12px; margin-top: 28px; }
+  .act {
+    font: inherit; font-size: 17px; font-weight: 600; cursor: pointer;
+    border: 0; border-radius: 14px; padding: 15px 0; width: 150px;
+    background: var(--soft); color: var(--ink);
+  }
+  .act.go { background: var(--blue); color: #fff; }
+  .act:active { filter: brightness(.95); }
+
+  .receipt {
+    width: min(460px, 90%); text-align: left;
+    background: var(--soft); border-radius: 18px; padding: 8px 24px;
+  }
+  .receipt .row {
+    display: flex; justify-content: space-between; align-items: baseline; gap: 24px;
+    padding: 14px 0; font-size: 16px; color: var(--muted); border-bottom: 1px solid var(--line);
+  }
+  .receipt .row:last-child { border: 0; }
+  .receipt .row b { color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; }
+  .receipt .big { font-size: 24px; font-weight: 700 !important; }
+
+  .spinner {
+    width: 52px; height: 52px; border-radius: 50%; margin-bottom: 28px;
+    border: 4px solid var(--blue-soft); border-top-color: var(--blue);
+    animation: spin .8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* 현금 나옴 */
+  .slot-wrap { position: relative; width: 360px; max-width: 80%; height: 170px; margin-bottom: 20px; overflow: hidden; }
+  .slot { position: absolute; left: 0; right: 0; bottom: 0; height: 22px; border-radius: 11px; background: #d1d5db; }
+  .bill {
+    position: absolute; left: 50%; bottom: 11px; width: 260px; height: 124px; margin-left: -130px;
+    border-radius: 10px; background: #f6d77a; border: 1.5px solid #e2b84a;
+    display: flex; align-items: center; justify-content: space-between; padding: 0 22px;
+    font-size: 22px; font-weight: 800; color: #8a6514;
+    transform: translateY(140px);
+  }
+  .bill::after { content: ""; width: 54px; height: 54px; border-radius: 50%; background: rgba(255,255,255,.5); }
+  .view.on .bill { animation: out .9s cubic-bezier(.2,.8,.3,1) forwards; }
+  .view.on .bill:nth-child(2) { animation-delay: .2s; }
+  .view.on .bill:nth-child(3) { animation-delay: .4s; }
+  .bill:nth-child(1) { --y: 0px; }
+  .bill:nth-child(2) { --y: -8px; --r: -2deg; }
+  .bill:nth-child(3) { --y: -16px; --r: 2deg; }
+  @keyframes out { to { transform: translateY(var(--y)) rotate(var(--r, 0deg)); } }
+
+  .badge {
+    width: 76px; height: 76px; border-radius: 50%; margin-bottom: 22px;
+    display: grid; place-items: center; background: var(--blue-soft); color: var(--blue);
+  }
+  .badge svg { width: 36px; height: 36px; }
+  .badge.red { background: #fdecec; color: var(--red); }
+  .count { margin-top: 22px; color: #9ca3af; font-size: 14px; }
+
+  footer.bar {
+    display: flex; align-items: center; justify-content: space-between; gap: 16px;
+    padding: 16px 48px; border-top: 1px solid var(--line); font-size: 14px; color: var(--muted); min-height: 64px;
+  }
+  footer .cancel {
+    font: inherit; font-weight: 600; font-size: 15px; cursor: pointer;
+    background: none; color: var(--red); border: 1.5px solid #f3c4c4; border-radius: 12px; padding: 8px 18px;
+  }
+  footer .cancel[hidden] { display: none; }
+
+  #cap { position: fixed; left: -9999px; top: 0; opacity: 0; width: 1px; height: 1px; }
+
+  @media (max-width: 700px) {
+    .machine { padding: calc(env(safe-area-inset-top) + 16px) calc(env(safe-area-inset-right) + 16px) calc(env(safe-area-inset-bottom) + 16px) calc(env(safe-area-inset-left) + 16px); }
+    .menu, .amounts { grid-template-columns: 1fr; }
+    .menu button { min-height: 88px; padding: 18px; }
+    header.bar, footer.bar { padding-left: 16px; padding-right: 16px; }
+    .view { padding: 16px; }
+  }
+  @media (max-height: 640px) {
+    .menu button { min-height: 84px; padding: 16px 22px; }
+    .sub { margin-bottom: 18px; }
+  }
+</style>
+</head>
+<body>
+<div class="machine">
+  <div class="screen-frame">
+    <header class="bar">
+      <div class="bank"><div class="logo">L</div>LEE&#39;S BANK</div>
+      <div class="clock" id="clock"></div>
+    </header>
+
+    <main>
+      <!-- 처음 화면 -->
+      <section class="view on" id="v-home">
+        <h1>원하시는 거래를 선택하세요</h1>
+        <p class="sub">화면을 누르거나 키보드 숫자를 누르세요</p>
+        <div class="menu">
+          <button data-go="withdraw"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="19" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6 9.5v5M18 9.5v5"/></svg></span><span><div class="t">현금 인출</div><div class="d">돈을 찾아요</div></span><span class="key">1</span></button>
+          <button data-go="transfer"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h14l-4-4M20 16H6l4 4"/></svg></span><span><div class="t">송금 · 이체</div><div class="d">다른 계좌로 보내요</div></span><span class="key">2</span></button>
+          <button data-go="balance"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/></svg></span><span><div class="t">잔액 조회</div><div class="d">남은 돈을 확인해요</div></span><span class="key">3</span></button>
+          <button data-go="deposit"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v11M7.5 9.5 12 14l4.5-4.5"/><path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg></span><span><div class="t">입금</div><div class="d">돈을 넣어요</div></span><span class="key">4</span></button>
+        </div>
+      </section>
+
+      <!-- 비밀번호 -->
+      <section class="view" id="v-pin">
+        <h1>비밀번호를 입력하세요</h1>
+        <p class="sub" id="pin-sub">비밀번호 6자리를 누른 뒤 <b>Enter</b></p>
+        <div class="pin-box" id="pin-box"><span></span><span></span><span></span><span></span><span></span><span></span></div>
+        <div class="msg" id="pin-msg"></div>
+        <div class="hint"><kbd>⌫</kbd> 지우기 · <kbd>Enter</kbd> 확인 · <kbd>Esc</kbd> 취소</div>
+      </section>
+
+      <!-- 카드 투입 -->
+      <section class="view" id="v-card">
+        <div class="card-anim"><div class="card-slot"></div><div class="card"><i></i></div></div>
+        <h1>카드를 투입하세요</h1>
+        <p class="sub">비밀번호가 확인되었습니다</p>
+        <div class="hint">카드를 넣은 뒤 <kbd>Enter</kbd> 또는 화면을 누르세요</div>
+      </section>
+
+      <!-- 금액 선택 -->
+      <section class="view" id="v-amount">
+        <h1 id="amount-title">인출할 금액을 선택하세요</h1>
+        <p class="sub" id="amount-sub">버튼 또는 키보드 숫자 1~6</p>
+        <div class="amounts" id="amounts"></div>
+      </section>
+
+      <!-- 숫자 직접 입력 (금액 / 계좌번호) -->
+      <section class="view" id="v-input">
+        <h1 id="input-title"></h1>
+        <p class="sub" id="input-sub"></p>
+        <div class="field" id="input-field"></div>
+        <div class="msg" id="input-msg"></div>
+        <div class="actions">
+          <button class="act" data-act="back">정정</button>
+          <button class="act go" data-act="ok">확인</button>
+        </div>
+        <div class="hint"><kbd>⌫</kbd> 지우기 · <kbd>Enter</kbd> 확인 · <kbd>Esc</kbd> 취소</div>
+      </section>
+
+      <!-- 확인 -->
+      <section class="view" id="v-confirm">
+        <h1 id="confirm-title">거래 내용을 확인하세요</h1>
+        <p class="sub">맞으면 <b>Enter</b>, 아니면 <b>Esc</b></p>
+        <div class="receipt" id="confirm-rows"></div>
+        <div class="actions">
+          <button class="act" data-act="cancel">취소</button>
+          <button class="act go" data-act="ok">확인</button>
+        </div>
+      </section>
+
+      <!-- 처리 중 -->
+      <section class="view" id="v-wait">
+        <div class="spinner"></div>
+        <h1 id="wait-title">처리 중입니다</h1>
+        <p class="sub">잠시만 기다려 주세요</p>
+      </section>
+
+      <!-- 현금 나옴 -->
+      <section class="view" id="v-cash">
+        <div class="slot-wrap">
+          <div class="bill">50,000</div><div class="bill">50,000</div><div class="bill">50,000</div>
+          <div class="slot"></div>
+        </div>
+        <h1>현금을 받으세요</h1>
+        <p class="sub" id="cash-sub"></p>
+        <div class="hint">아무 키나 누르면 처음 화면으로</div>
+      </section>
+
+      <!-- 결과 -->
+      <section class="view" id="v-done">
+        <div class="badge" id="done-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></div>
+        <h1 id="done-title"></h1>
+        <div class="receipt" id="done-rows"></div>
+        <div class="count" id="done-count"></div>
+      </section>
+
+      <!-- 잠김 -->
+      <section class="view" id="v-lock">
+        <div class="badge red"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></div>
+        <h1>비밀번호 3회 오류</h1>
+        <p class="sub">카드 사용이 정지되었습니다.<br>가까운 영업점에 문의하세요.</p>
+        <div class="count" id="lock-count"></div>
+      </section>
+    </main>
+
+    <footer class="bar">
+      <span id="foot-msg">카드를 넣고 거래를 선택하세요</span>
+      <button class="cancel" id="cancel" hidden>취소 (Esc)</button>
+    </footer>
+  </div>
+</div>
+
+<input id="cap" type="text" inputmode="none" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" aria-hidden="true">
+
+<script>
+(() => {
+  // 비밀번호 6자리: 기본 123456, 주소 뒤에 ?pin=000000 처럼 붙이면 바뀜
+  const qs = new URLSearchParams(location.search);
+  const PIN = /^\d{6}$/.test(qs.get('pin') || '') ? qs.get('pin') : '123456';
+  const PIN_LEN = 6;
+  const MAX_TRIES = 3;
+  const IDLE_MS = 60000;
+
+  const state = { mode: null, tries: 0, balance: 1234500, amount: 0, account: '', pin: '', input: '' };
+  let view = 'home', inputCfg = null, timers = [], idle;
+
+  const $ = (s) => document.querySelector(s);
+  const won = (n) => n.toLocaleString('ko-KR') + '원';
+  const LABEL = { withdraw: '현금 인출', transfer: '송금 · 이체', balance: '잔액 조회', deposit: '입금' };
+
+  // ---- 소리 ----
+  let ac;
+  function beep(f = 880, d = 0.07, type = 'square', vol = 0.06) {
+    try {
+      ac = ac || new (window.AudioContext || window.webkitAudioContext)();
+      const o = ac.createOscillator(), g = ac.createGain();
+      o.type = type; o.frequency.value = f;
+      g.gain.setValueAtTime(vol, ac.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.0001, ac.currentTime + d);
+      o.connect(g).connect(ac.destination); o.start(); o.stop(ac.currentTime + d);
+    } catch (e) {}
+  }
+  const errBeep = () => { beep(220, .18, 'sawtooth'); setTimeout(() => beep(180, .25, 'sawtooth'), 200); };
+  const okBeep = () => { beep(988, .08); setTimeout(() => beep(1319, .12), 90); };
+
+  // ---- 화면 전환 ----
+  function later(fn, ms) { timers.push(setTimeout(fn, ms)); }
+  function show(name) {
+    timers.forEach(clearTimeout); timers = [];
+    document.querySelectorAll('.view').forEach(v => v.classList.toggle('on', v.id === 'v-' + name));
+    view = name;
+    $('#cancel').hidden = ['home', 'wait', 'cash', 'done', 'lock'].includes(name);
+    const foot = {
+      home: '카드를 넣고 거래를 선택하세요',
+      pin: '비밀번호는 다른 사람이 보지 않게 입력하세요',
+      card: '카드를 IC칩이 위로 오게 넣어 주세요',
+    }[name];
+    $('#foot-msg').textContent = foot || (state.mode ? LABEL[state.mode] + ' 진행 중' : '');
+    focusCap(); resetIdle();
+  }
+  function home() {
+    Object.assign(state, { mode: null, amount: 0, account: '', pin: '', input: '' });
+    show('home');
+  }
+
+  // ---- 비밀번호 ----
+  function startPin(mode) {
+    state.mode = mode; state.pin = '';
+    $('#pin-msg').textContent = ''; $('#pin-msg').className = 'msg';
+    $('#pin-sub').innerHTML = `<b>${LABEL[mode]}</b> · 비밀번호 6자리를 누른 뒤 <b>Enter</b>`;
+    drawPin(); show('pin');
+  }
+  function drawPin() {
+    [...$('#pin-box').children].forEach((s, i) => {
+      s.textContent = i < state.pin.length ? '●' : '';
+      s.classList.toggle('filled', i < state.pin.length);
+      s.classList.toggle('cur', i === state.pin.length);
+    });
+  }
+  function checkPin() {
+    if (state.pin.length < PIN_LEN) {
+      $('#pin-msg').textContent = '비밀번호 6자리를 모두 입력하세요'; $('#pin-msg').className = 'msg err';
+      errBeep(); return;
+    }
+    if (state.pin === PIN) {
+      state.tries = 0;
+      okBeep();
+      show('card');
+      return;
+    }
+    state.tries++;
+    state.pin = ''; drawPin();
+    const box = $('#pin-box'); box.classList.remove('shake'); box.classList.add('err'); setTimeout(() => box.classList.remove('err'), 900); void box.offsetWidth; box.classList.add('shake');
+    errBeep();
+    if (state.tries >= MAX_TRIES) { lock(); return; }
+    $('#pin-msg').textContent = `비밀번호가 틀렸습니다 ${state.tries}회 실패!!`;
+    $('#pin-msg').className = 'msg err';
+  }
+  function lock() {
+    show('lock');
+    countdown('#lock-count', 8, () => { state.tries = 0; home(); });
+  }
+  function countdown(sel, sec, done) {
+    const tick = () => {
+      $(sel).textContent = `${sec}초 뒤 처음 화면으로 돌아갑니다`;
+      if (sec-- <= 0) return done();
+      later(tick, 1000);
+    };
+    tick();
+  }
+
+  function cardIn() { beep(); wait('카드를 읽고 있습니다', afterPin); }
+  function afterPin() {
+    const m = state.mode;
+    if (m === 'withdraw') amountPicker('인출할 금액을 선택하세요');
+    else if (m === 'deposit') amountPicker('입금할 금액을 선택하세요');
+    else if (m === 'transfer') askNumber({
+      title: '받는 분 계좌번호를 입력하세요', sub: '숫자만 입력 (10~14자리)', ph: '계좌번호',
+      max: 14, fmt: (v) => v, check: (v) => v.length >= 10 || '계좌번호를 10자리 이상 입력하세요',
+      ok: (v) => { state.account = v; amountPicker('보낼 금액을 선택하세요'); },
+    });
+    else if (m === 'balance') wait('조회 중입니다', () => done('🧾', '잔액 조회', [
+      ['계좌', 'LEE\'S BANK 123-456-789012'],
+      ['현재 잔액', won(state.balance), true],
+    ]));
+  }
+
+  // ---- 금액 ----
+  const PRESETS = [10000, 30000, 50000, 100000, 300000];
+  function amountPicker(title) {
+    $('#amount-title').textContent = title;
+    const hasAll = state.mode !== 'deposit';
+    $('#amount-sub').textContent = `버튼 또는 키보드 숫자 1~${hasAll ? 7 : 6} · 잔액 ${won(state.balance)}`;
+    const box = $('#amounts'); box.innerHTML = '';
+    PRESETS.forEach((a, i) => box.appendChild(amountBtn(i + 1, (a / 10000) + '만원', () => pickAmount(a))));
+    box.appendChild(amountBtn(6, '직접 입력', () => askNumber({
+      title: '금액을 입력하세요', sub: '만원 단위로 입력 (예: 70000)', ph: '금액',
+      max: 8, fmt: (v) => v ? Number(v).toLocaleString('ko-KR') + ' 원' : '',
+      check: (v) => {
+        const n = Number(v);
+        if (!n) return '금액을 입력하세요';
+        if (n % 10000) return '만원 단위로만 가능합니다';
+        return true;
+      },
+      ok: (v) => pickAmount(Number(v)),
+    })));
+    if (hasAll) {
+      // 인출은 지폐로만 나오니 만원 단위까지, 송금은 잔액 전부
+      const all = state.mode === 'withdraw' ? Math.floor(state.balance / 10000) * 10000 : state.balance;
+      const b = amountBtn(7, `전액 <span class="all-amt">${won(all)}</span>`, () => pickAmount(all));
+      b.classList.add('all');
+      b.disabled = all <= 0;
+      box.appendChild(b);
+    }
+    show('amount');
+  }
+  function amountBtn(k, text, fn) {
+    const b = document.createElement('button');
+    b.innerHTML = `<span class="key">${k}</span>${text}`;
+    b.onclick = () => { beep(); fn(); };
+    b.dataset.k = k;
+    return b;
+  }
+  function pickAmount(a) {
+    const m = state.mode;
+    if (m !== 'deposit' && a > state.balance) {
+      errBeep();
+      $('#amount-sub').innerHTML = `<span style="color:var(--red);font-weight:600">잔액이 부족합니다 (잔액 ${won(state.balance)})</span>`;
+      if (view !== 'amount') show('amount');
+      return;
+    }
+    state.amount = a;
+    const rows = [['거래', LABEL[m]], ['금액', won(a), true]];
+    if (m === 'transfer') rows.splice(1, 0, ['받는 계좌', fmtAcct(state.account)]);
+    if (m !== 'deposit') rows.push(['수수료', '0원']);
+    confirm(rows);
+  }
+  const fmtAcct = (v) => v.replace(/^(\d{3})(\d{3})(\d+)$/, '$1-$2-$3');
+
+  // ---- 숫자 입력 ----
+  function askNumber(cfg) {
+    inputCfg = cfg; state.input = '';
+    $('#input-title').textContent = cfg.title;
+    $('#input-sub').textContent = cfg.sub;
+    $('#input-msg').textContent = '';
+    drawInput(); show('input');
+  }
+  function drawInput() {
+    const v = state.input, f = $('#input-field');
+    f.innerHTML = v ? `<span>${inputCfg.fmt(v)}</span><span class="caret"></span>` : `<span class="ph">${inputCfg.ph}</span><span class="caret"></span>`;
+  }
+  function submitInput() {
+    const r = inputCfg.check(state.input);
+    if (r !== true) { $('#input-msg').textContent = r; $('#input-msg').className = 'msg err'; errBeep(); return; }
+    beep(); inputCfg.ok(state.input);
+  }
+
+  // ---- 확인 / 처리 / 결과 ----
+  function rowsHtml(rows) {
+    return rows.map(([k, v, big]) => `<div class="row"><span>${k}</span><b class="${big ? 'big' : ''}">${v}</b></div>`).join('');
+  }
+  function confirm(rows) { $('#confirm-rows').innerHTML = rowsHtml(rows); show('confirm'); }
+  function wait(title, then) { $('#wait-title').textContent = title; show('wait'); later(then, 1600); }
+  function done(ico, title, rows) {
+    $('#done-title').textContent = title;
+    $('#done-rows').innerHTML = rowsHtml(rows);
+    okBeep(); show('done');
+    countdown('#done-count', 8, home);
+  }
+  function commit() {
+    const { mode: m, amount: a } = state;
+    if (m === 'withdraw') wait('현금을 세고 있습니다', () => {
+      state.balance -= a;
+      $('#cash-sub').textContent = `${won(a)} · 남은 잔액 ${won(state.balance)}`;
+      show('cash');
+      for (let i = 0; i < 6; i++) later(() => beep(140 + (i % 2) * 40, .09, 'square', .05), 300 + i * 110);
+      later(okBeep, 1300);
+      later(home, 12000);
+    });
+    else if (m === 'transfer') wait('송금 중입니다', () => {
+      state.balance -= a;
+      done('📤', '송금이 완료되었습니다', [['받는 계좌', fmtAcct(state.account)], ['보낸 금액', won(a), true], ['남은 잔액', won(state.balance)]]);
+    });
+    else if (m === 'deposit') wait('현금을 확인하고 있습니다', () => {
+      state.balance += a;
+      done('📥', '입금이 완료되었습니다', [['입금액', won(a), true], ['잔액', won(state.balance)]]);
+    });
+  }
+
+  // ---- 키보드 ----
+  function onKey(key) {
+    resetIdle();
+    if (key === 'Escape') { if (!$('#cancel').hidden) { beep(440); home(); } return; }
+    const digit = /^[0-9]$/.test(key) ? key : null;
+    const enter = key === 'Enter';
+    const back = key === 'Backspace' || key === 'Delete';
+
+    if (view === 'home') {
+      const b = digit && document.querySelectorAll('#v-home .menu button')[Number(digit) - 1];
+      if (b) press(b);
+    } else if (view === 'pin') {
+      if (digit && state.pin.length < PIN_LEN) { state.pin += digit; beep(); drawPin(); $('#pin-msg').textContent = ''; }
+      else if (back && state.pin) { state.pin = state.pin.slice(0, -1); beep(660); drawPin(); }
+      else if (enter) checkPin();
+    } else if (view === 'card') {
+      if (enter) cardIn();
+    } else if (view === 'amount') {
+      const b = digit && $(`#amounts button[data-k="${digit}"]`);
+      if (b && !b.disabled) press(b);
+    } else if (view === 'input') {
+      if (digit && state.input.length < inputCfg.max && !(digit === '0' && !state.input && inputCfg.ph === '금액')) {
+        state.input += digit; beep(); drawInput(); $('#input-msg').textContent = '';
+      } else if (back && state.input) { state.input = state.input.slice(0, -1); beep(660); drawInput(); }
+      else if (enter) submitInput();
+    } else if (view === 'confirm') {
+      if (enter) { beep(); commit(); }
+    } else if (view === 'cash' || view === 'done') {
+      home();
+    }
+  }
+  function press(b) { b.classList.add('press'); setTimeout(() => b.classList.remove('press'), 120); b.click(); }
+
+  document.addEventListener('keydown', (e) => {
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    if (['Enter', 'Escape', 'Backspace', 'Delete', ' '].includes(e.key) || /^[0-9]$/.test(e.key)) e.preventDefault();
+    onKey(e.key);
+  });
+
+  // 아이패드에서 하드웨어 키보드 입력을 놓치지 않도록 보이지 않는 입력칸에 포커스 유지
+  const cap = $('#cap');
+  function focusCap() { try { cap.focus({ preventScroll: true }); } catch (e) {} }
+  cap.addEventListener('input', () => { cap.value = ''; });
+  document.addEventListener('pointerdown', () => setTimeout(focusCap, 0));
+
+  // ---- 버튼 ----
+  document.querySelectorAll('[data-go]').forEach(b => b.addEventListener('click', () => { beep(); startPin(b.dataset.go); }));
+  document.querySelectorAll('[data-act]').forEach(b => b.addEventListener('click', () => {
+    const a = b.dataset.act;
+    if (a === 'cancel') { beep(440); home(); }
+    else if (a === 'back') { state.input = ''; drawInput(); beep(660); }
+    else if (a === 'ok') onKey('Enter');
+  }));
+  $('#cancel').addEventListener('click', () => { beep(440); home(); });
+  document.querySelectorAll('#v-cash, #v-done').forEach(v => v.addEventListener('click', home));
+  $('#v-card').addEventListener('click', cardIn);
+
+  // ---- 시계 / 자동 복귀 ----
+  function clock() {
+    const d = new Date();
+    $('#clock').textContent = d.toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'short' }) + ' ' +
+      d.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false });
+  }
+  clock(); setInterval(clock, 10000);
+  function resetIdle() { clearTimeout(idle); idle = setTimeout(() => { if (view !== 'home') home(); }, IDLE_MS); }
+
+  show('home');
+})();
+</script>
+</body>
+</html>
