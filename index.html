@@ -348,7 +348,7 @@
   const MAX_TRIES = 3;
   const IDLE_MS = 60000;
 
-  const state = { mode: null, tries: 0, balance: 1234500, amount: 0, account: '', pin: '', input: '' };
+  const state = { mode: null, tries: 0, balance: 1000000, amount: 0, account: '', pin: '', input: '' };
   let view = 'home', inputCfg = null, timers = [], idle;
 
   const $ = (s) => document.querySelector(s);
@@ -392,7 +392,7 @@
 
   // ---- 비밀번호 ----
   function startPin(mode) {
-    if (!PIN) { state.mode = mode; $('#card-sub').textContent = `${LABEL[mode]} · 카드를 넣으면 거래가 시작됩니다`; show('card'); return; }
+    if (!PIN) { state.mode = mode; mode === 'withdraw' ? askCard('카드를 넣으면 인출이 시작됩니다') : afterPin(); return; }
     state.mode = mode; state.pin = '';
     $('#pin-msg').textContent = ''; $('#pin-msg').className = 'msg';
     $('#pin-sub').innerHTML = `<b>${LABEL[mode]}</b> · 비밀번호 6자리를 누른 뒤 <b>Enter</b>`;
@@ -413,8 +413,7 @@
     if (state.pin === PIN) {
       state.tries = 0;
       okBeep();
-      $('#card-sub').textContent = '비밀번호가 확인되었습니다';
-      show('card');
+      state.mode === 'withdraw' ? askCard('비밀번호가 확인되었습니다') : later(afterPin, 400);
       return;
     }
     state.tries++;
@@ -438,6 +437,8 @@
     tick();
   }
 
+  // 카드 투입은 현금 인출에서만
+  function askCard(sub) { $('#card-sub').textContent = sub; show('card'); }
   function cardIn() { beep(); wait('카드를 읽고 있습니다', afterPin); }
   function afterPin() {
     const m = state.mode;
