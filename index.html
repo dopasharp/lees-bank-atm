@@ -69,7 +69,8 @@
   .menu button, .amounts button {
     font: inherit; color: var(--ink); cursor: pointer; position: relative;
     background: var(--screen); border: 1.5px solid var(--line); border-radius: 20px;
-    transition: border-color .15s, background .15s, transform .1s;
+    box-shadow: 0 5px 0 #dfe3ea;
+    transition: border-color .12s, background .12s, transform .08s, box-shadow .08s;
   }
   .menu button {
     display: flex; align-items: center; gap: 20px; text-align: left;
@@ -77,7 +78,8 @@
   }
   .menu button:hover, .amounts button:hover { border-color: #c7d2fe; }
   .menu button:active, .menu button.press, .amounts button:active, .amounts button.press {
-    border-color: var(--blue); background: var(--blue-soft); transform: scale(.985);
+    border-color: var(--blue); background: var(--blue-soft);
+    transform: translateY(4px); box-shadow: 0 1px 0 #c7d2fe;
   }
   .menu .ico {
     width: 60px; height: 60px; flex: none; border-radius: 16px;
@@ -148,13 +150,16 @@
     display: flex; align-items: center; justify-content: center;
     background: linear-gradient(135deg, #3b82f6, var(--blue)); border-color: var(--blue); color: #fff;
     font-size: clamp(22px, 2.6vw, 28px); font-weight: 800;
-    box-shadow: 0 8px 22px rgba(37, 99, 235, .35);
+    box-shadow: 0 7px 0 #1e3a8a, 0 12px 24px rgba(37, 99, 235, .35);
     animation: glow 1.8s ease-in-out infinite;
   }
   .amounts button.all .key { color: rgba(255,255,255,.7); }
   .amounts button.all svg { width: 28px; height: 28px; }
   .amounts button.all:hover { border-color: var(--blue); }
-  .amounts button.all:active, .amounts button.all.press { background: var(--blue); filter: brightness(.92); }
+  .amounts button.all:active, .amounts button.all.press {
+    background: linear-gradient(135deg, #2f6fe0, #1d4fc4); border-color: #1d4fc4;
+    transform: translateY(6px); box-shadow: 0 1px 0 #1e3a8a, 0 3px 8px rgba(37, 99, 235, .3); animation: none;
+  }
   .amounts button.all.picked { outline: 3px solid #93c5fd; outline-offset: 3px; }
   .amounts button.all:disabled { opacity: .4; cursor: default; animation: none; box-shadow: none; }
   #v-amount .sub { margin-bottom: 24px; }
@@ -164,8 +169,7 @@
   }
   .amt-err[hidden] { display: none; }
   .amt-err.shake { animation: shake .4s; }
-  .all-amt { font-size: .72em; font-weight: 700; background: rgba(255,255,255,.2); padding: 4px 12px; border-radius: 999px; }
-  @keyframes glow { 50% { box-shadow: 0 8px 30px rgba(37, 99, 235, .6); transform: translateY(-1px); } }
+  @keyframes glow { 50% { box-shadow: 0 7px 0 #1e3a8a, 0 14px 34px rgba(37, 99, 235, .65); } }
 
   .actions { display: flex; gap: 12px; margin-top: 28px; }
   .act {
@@ -237,9 +241,12 @@
     transition: background .15s, border-color .15s, opacity .15s;
   }
   .nb svg, .p-home svg { width: 18px; height: 18px; }
-  .nb:active { background: var(--soft); }
+  .nb { box-shadow: 0 3px 0 #dfe3ea; transition: transform .08s, box-shadow .08s, background .12s; }
+  .nb:not(:disabled):active, .nb.press { background: var(--soft); transform: translateY(3px); box-shadow: 0 0 0 #dfe3ea; }
+  .nb.go { box-shadow: 0 3px 0 #1e3a8a; }
+  .nb.go:not(:disabled):active, .nb.go.press { background: var(--blue); box-shadow: 0 0 0 #1e3a8a; }
   .nb.go { background: var(--blue); border-color: var(--blue); color: #fff; }
-  .nb.go:active { filter: brightness(.92); }
+  .nb.go:active { filter: brightness(.95); }
   .nb:disabled { opacity: .35; cursor: default; }
   .amounts button.picked { border-color: var(--blue); }
 
@@ -561,7 +568,7 @@
     const box = $('#amounts'); box.innerHTML = '';
     const opts = PRESETS.map(a => [(a / 10000) + '만원', () => chooseAmount(a)]);
     const allIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="19" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/></svg>';
-    if (hasAll) opts.push([`${allIcon}${m === 'withdraw' ? '전액 뽑기' : '전액 보내기'} <span class="all-amt">${won(all)}</span>`, () => chooseAmount(all, true), 'all']);
+    if (hasAll) opts.push([`${allIcon}${m === 'withdraw' ? '전액 뽑기' : '전액 보내기'}`, () => chooseAmount(all, true), 'all']);
     pick = hasAll && m === 'withdraw' ? opts.length - 1 : 0;   // 인출은 전액이 기본
     $('#amt-err').hidden = true; $('#amount-sub').hidden = false;
     opts.forEach(([text, fn, cls], i) => {
@@ -569,7 +576,7 @@
       b.innerHTML = `<span class="key">${i + 1}</span>${text}`;
       b.dataset.k = i + 1;
       if (cls) b.classList.add(cls);
-      b.onclick = () => { beep(); fn(); };
+      b.onclick = () => tap(b, fn);
       box.appendChild(b);
     });
     markPick();
@@ -758,8 +765,8 @@
     const digit = /^[0-9]$/.test(key) ? key : null;
     const back = key === 'Backspace' || key === 'Delete';
     if (key === 'Escape') { if (view !== 'home') { beep(440); home(); } return; }
-    if (key === 'Enter' || key === 'ArrowRight') { next(); return; }
-    if (key === 'ArrowLeft') { if (view !== 'home') { beep(660); prev(); } return; }
+    if (key === 'Enter' || key === 'ArrowRight') { if (nextFn) { flash('#b-next'); beep(); next(); } return; }
+    if (key === 'ArrowLeft') { if (view !== 'home') { flash('#b-prev'); beep(660); prev(); } return; }
 
     if (view === 'home') {
       const b = digit && document.querySelectorAll('#v-home .menu button')[Number(digit) - 1];
@@ -776,7 +783,17 @@
       } else if (back && state.input) { state.input = state.input.slice(0, -1); beep(660); drawInput(); }
     }
   }
-  function press(b) { b.classList.add('press'); setTimeout(() => b.classList.remove('press'), 120); b.click(); }
+  function press(b) { b.click(); }
+  function flash(sel) { const b = $(sel); b.classList.add('press'); setTimeout(() => b.classList.remove('press'), 140); }
+  // 눌리는 느낌: 버튼이 쑥 들어갔다가 잠깐 뒤에 다음 화면으로
+  let tapping = false;
+  function tap(b, fn) {
+    if (tapping) return;
+    tapping = true; beep();
+    b.classList.add('press');
+    setTimeout(() => { b.classList.remove('press'); tapping = false; fn(); }, 160);
+  }
+  document.addEventListener('touchstart', () => {}, { passive: true });   // iOS에서 :active 눌림 표시 켜기
 
   document.addEventListener('keydown', (e) => {
     if (e.metaKey || e.ctrlKey || e.altKey) return;
@@ -791,7 +808,7 @@
   document.addEventListener('pointerdown', () => setTimeout(focusCap, 0));
 
   // ---- 버튼 ----
-  document.querySelectorAll('[data-go]').forEach(b => b.addEventListener('click', () => choose(b.dataset.go)));
+  document.querySelectorAll('[data-go]').forEach(b => b.addEventListener('click', () => tap(b, () => { state.mode = b.dataset.go; go(pinStep); })));
   $('#b-next').addEventListener('click', () => { beep(); next(); });
   $('#b-prev').addEventListener('click', () => { beep(660); prev(); });
   $('#b-home').addEventListener('click', () => { beep(440); home(); });
