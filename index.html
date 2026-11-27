@@ -260,7 +260,7 @@
       <section class="view" id="v-card">
         <div class="card-anim"><div class="card-slot"></div><div class="card"><i></i></div></div>
         <h1>카드를 투입하세요</h1>
-        <p class="sub">비밀번호가 확인되었습니다</p>
+        <p class="sub" id="card-sub">카드를 넣으면 거래가 시작됩니다</p>
         <div class="hint">카드를 넣은 뒤 <kbd>Enter</kbd> 또는 화면을 누르세요</div>
       </section>
 
@@ -341,9 +341,9 @@
 
 <script>
 (() => {
-  // 비밀번호 6자리: 기본 123456, 주소 뒤에 ?pin=000000 처럼 붙이면 바뀜
+  // 기본은 비밀번호 없이 바로 진행. 주소 뒤에 ?pin=123456 처럼 6자리를 붙이면 비밀번호를 물어봄
   const qs = new URLSearchParams(location.search);
-  const PIN = /^\d{6}$/.test(qs.get('pin') || '') ? qs.get('pin') : '123456';
+  const PIN = /^\d{6}$/.test(qs.get('pin') || '') ? qs.get('pin') : null;
   const PIN_LEN = 6;
   const MAX_TRIES = 3;
   const IDLE_MS = 60000;
@@ -392,6 +392,7 @@
 
   // ---- 비밀번호 ----
   function startPin(mode) {
+    if (!PIN) { state.mode = mode; $('#card-sub').textContent = `${LABEL[mode]} · 카드를 넣으면 거래가 시작됩니다`; show('card'); return; }
     state.mode = mode; state.pin = '';
     $('#pin-msg').textContent = ''; $('#pin-msg').className = 'msg';
     $('#pin-sub').innerHTML = `<b>${LABEL[mode]}</b> · 비밀번호 6자리를 누른 뒤 <b>Enter</b>`;
@@ -412,6 +413,7 @@
     if (state.pin === PIN) {
       state.tries = 0;
       okBeep();
+      $('#card-sub').textContent = '비밀번호가 확인되었습니다';
       show('card');
       return;
     }
