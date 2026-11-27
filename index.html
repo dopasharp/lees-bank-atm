@@ -228,6 +228,7 @@
     padding: 14px 48px; border-top: 1px solid var(--line); font-size: 14px; color: var(--muted); min-height: 64px;
   }
   .nav { display: flex; gap: 10px; flex: none; }
+  #foot-msg { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .nb {
     font: inherit; font-size: 17px; font-weight: 600; cursor: pointer;
     display: inline-flex; align-items: center; gap: 6px;
@@ -235,7 +236,7 @@
     border: 1.5px solid var(--line); border-radius: 14px; padding: 12px 22px; min-width: 112px; justify-content: center;
     transition: background .15s, border-color .15s, opacity .15s;
   }
-  .nb svg { width: 18px; height: 18px; }
+  .nb svg, .p-home svg { width: 18px; height: 18px; }
   .nb:active { background: var(--soft); }
   .nb.go { background: var(--blue); border-color: var(--blue); color: #fff; }
   .nb.go:active { filter: brightness(.92); }
@@ -244,7 +245,7 @@
 
   #cap { position: fixed; left: -9999px; top: 0; opacity: 0; width: 1px; height: 1px; }
 
-  @media (max-width: 1000px) { #foot-msg { display: none; } footer.bar { justify-content: center; } }
+  @media (max-width: 1000px) { #foot-msg { display: none; } footer.bar { justify-content: center; } .nb { min-width: 0; padding: 12px 14px; } }
   @media (max-width: 900px) {
     .view { padding: 24px 32px; }
     .menu { grid-template-columns: 1fr; }
@@ -304,8 +305,9 @@
   .balloons { position: absolute; inset: 0; pointer-events: none; z-index: 1; }
   .balloons span { position: absolute; bottom: -140px; font-size: 80px; animation: prise linear forwards; }
   @keyframes prise { to { transform: translateY(-130vh) rotate(var(--rot)); } }
+  .p-btns { position: absolute; z-index: 3; right: 28px; bottom: 28px; display: flex; gap: 10px; }
   .p-home {
-    position: absolute; z-index: 3; right: 28px; bottom: 28px;
+    display: inline-flex; align-items: center; gap: 6px;
     font: inherit; font-size: 17px; font-weight: 700; cursor: pointer;
     background: rgba(255,255,255,.9); color: var(--ink); border: 0; border-radius: 14px; padding: 12px 22px;
   }
@@ -402,6 +404,7 @@
       <nav class="nav">
         <button class="nb" id="b-prev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>이전</button>
         <button class="nb" id="b-home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg>홈으로</button>
+        <button class="nb" id="b-replay"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>다시하기</button>
         <button class="nb go" id="b-next">다음<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button>
       </nav>
     </footer>
@@ -418,7 +421,7 @@
     <div class="p-hbd">생일 축하합니다!</div>
     <div class="p-emoji">🎉 🥳 🎁 🎈 🎊</div>
   </div>
-  <button class="p-home" id="p-home">홈으로</button>
+  <div class="p-btns"><button class="p-home" id="p-replay"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>다시하기</button><button class="p-home" id="p-home">홈으로</button></div>
 </div>
 
 <input id="cap" type="text" inputmode="none" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" aria-hidden="true">
@@ -464,6 +467,7 @@
     $('#foot-msg').textContent = foot || (state.mode ? LABEL[state.mode] : '');
     $('#b-prev').disabled = name === 'home';
     $('#b-home').disabled = name === 'home';
+    $('#b-replay').disabled = name === 'home';
     $('#b-next').disabled = !next;
     focusCap(); resetIdle();
   }
@@ -480,6 +484,12 @@
     stack = []; go(homeStep);
   }
   function next() { if (nextFn) nextFn(); }
+  // 다시하기: 지금 거래를 처음(비밀번호)부터 다시
+  function replay() {
+    const m = state.mode;
+    if (!m) return;
+    home(); choose(m);
+  }
   // 결과 화면: 이전을 누르면 처음 화면 (같은 거래가 두 번 되지 않게)
   function result(step) { stack = [homeStep]; go(step); }
   // 처리 중 화면: 잠깐 보여주고 자동으로 넘어감 (다음을 누르면 바로)
@@ -785,6 +795,8 @@
   $('#b-next').addEventListener('click', () => { beep(); next(); });
   $('#b-prev').addEventListener('click', () => { beep(660); prev(); });
   $('#b-home').addEventListener('click', () => { beep(440); home(); });
+  $('#b-replay').addEventListener('click', replay);
+  $('#p-replay').addEventListener('click', (e) => { e.stopPropagation(); replay(); });
 
   // ---- 시계 / 자동 복귀 ----
   function clock() {
