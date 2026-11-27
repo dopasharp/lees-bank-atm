@@ -12,6 +12,7 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <style>
   :root {
+    --edge: 156px;
     --bg: #eef1f5;
     --screen: #ffffff;
     --ink: #111827;
@@ -33,7 +34,8 @@
   }
   .machine {
     position: fixed; inset: 0; display: flex; flex-direction: column;
-    padding: calc(env(safe-area-inset-top) + 40px) calc(env(safe-area-inset-right) + 56px) calc(env(safe-area-inset-bottom) + 40px) calc(env(safe-area-inset-left) + 56px);
+    /* 좌우·아래 여백 3cm 고정 (아이패드 에어: 실제 3cm ≈ 156px) */
+    padding: calc(env(safe-area-inset-top) + 40px) var(--edge) var(--edge) var(--edge);
   }
   .screen-frame {
     flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: hidden;
@@ -54,7 +56,7 @@
   .view {
     position: absolute; inset: 0; display: none;
     flex-direction: column; align-items: center; justify-content: center;
-    padding: 32px 64px; text-align: center;
+    padding: 20px 64px; text-align: center;
   }
   .view.on { display: flex; animation: in .25s ease-out; }
   @keyframes in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
@@ -223,6 +225,13 @@
 
   #cap { position: fixed; left: -9999px; top: 0; opacity: 0; width: 1px; height: 1px; }
 
+  @media (max-width: 1000px) { #foot-msg { display: none; } footer.bar { justify-content: center; } }
+  @media (max-width: 900px) {
+    .view { padding: 24px 32px; }
+    .menu { grid-template-columns: 1fr; }
+    .menu button { min-height: 96px; padding: 20px 24px; }
+    .amounts { grid-template-columns: 1fr 1fr; }
+  }
   @media (max-width: 700px) {
     .machine { padding: calc(env(safe-area-inset-top) + 16px) calc(env(safe-area-inset-right) + 16px) calc(env(safe-area-inset-bottom) + 16px) calc(env(safe-area-inset-left) + 16px); }
     .menu, .amounts { grid-template-columns: 1fr; }
