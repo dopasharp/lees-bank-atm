@@ -203,13 +203,22 @@
 
   footer.bar {
     display: flex; align-items: center; justify-content: space-between; gap: 16px;
-    padding: 16px 48px; border-top: 1px solid var(--line); font-size: 14px; color: var(--muted); min-height: 64px;
+    padding: 14px 48px; border-top: 1px solid var(--line); font-size: 14px; color: var(--muted); min-height: 64px;
   }
-  footer .cancel {
-    font: inherit; font-weight: 600; font-size: 15px; cursor: pointer;
-    background: none; color: var(--red); border: 1.5px solid #f3c4c4; border-radius: 12px; padding: 8px 18px;
+  .nav { display: flex; gap: 10px; flex: none; }
+  .nb {
+    font: inherit; font-size: 17px; font-weight: 600; cursor: pointer;
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--screen); color: var(--ink);
+    border: 1.5px solid var(--line); border-radius: 14px; padding: 12px 22px; min-width: 112px; justify-content: center;
+    transition: background .15s, border-color .15s, opacity .15s;
   }
-  footer .cancel[hidden] { display: none; }
+  .nb svg { width: 18px; height: 18px; }
+  .nb:active { background: var(--soft); }
+  .nb.go { background: var(--blue); border-color: var(--blue); color: #fff; }
+  .nb.go:active { filter: brightness(.92); }
+  .nb:disabled { opacity: .35; cursor: default; }
+  .amounts button.picked { border-color: var(--blue); }
 
   #cap { position: fixed; left: -9999px; top: 0; opacity: 0; width: 1px; height: 1px; }
 
@@ -218,6 +227,8 @@
     .menu, .amounts { grid-template-columns: 1fr; }
     .menu button { min-height: 88px; padding: 18px; }
     header.bar, footer.bar { padding-left: 16px; padding-right: 16px; }
+    #foot-msg { display: none; }
+    .nav { flex: 1; } .nb { flex: 1; min-width: 0; padding: 12px 8px; }
     .view { padding: 16px; }
   }
   @media (max-height: 640px) {
@@ -250,24 +261,23 @@
       <!-- 비밀번호 -->
       <section class="view" id="v-pin">
         <h1>비밀번호를 입력하세요</h1>
-        <p class="sub" id="pin-sub">비밀번호 6자리를 누른 뒤 <b>Enter</b></p>
+        <p class="sub" id="pin-sub">비밀번호 6자리를 입력하세요</p>
         <div class="pin-box" id="pin-box"><span></span><span></span><span></span><span></span><span></span><span></span></div>
-        <div class="msg" id="pin-msg"></div>
-        <div class="hint"><kbd>⌫</kbd> 지우기 · <kbd>Enter</kbd> 확인 · <kbd>Esc</kbd> 취소</div>
+        <div class="hint"><kbd>⌫</kbd> 지우기 · <kbd>Enter</kbd> 다음</div>
       </section>
 
       <!-- 카드 투입 -->
       <section class="view" id="v-card">
         <div class="card-anim"><div class="card-slot"></div><div class="card"><i></i></div></div>
         <h1>카드를 투입하세요</h1>
-        <p class="sub" id="card-sub">카드를 넣으면 거래가 시작됩니다</p>
-        <div class="hint">카드를 넣은 뒤 <kbd>Enter</kbd> 또는 화면을 누르세요</div>
+        <p class="sub">카드를 넣으면 인출이 시작됩니다</p>
+        <div class="hint">카드를 넣은 뒤 <b>다음</b>을 누르세요</div>
       </section>
 
       <!-- 금액 선택 -->
       <section class="view" id="v-amount">
-        <h1 id="amount-title">인출할 금액을 선택하세요</h1>
-        <p class="sub" id="amount-sub">버튼 또는 키보드 숫자 1~6</p>
+        <h1 id="amount-title"></h1>
+        <p class="sub" id="amount-sub"></p>
         <div class="amounts" id="amounts"></div>
       </section>
 
@@ -276,23 +286,14 @@
         <h1 id="input-title"></h1>
         <p class="sub" id="input-sub"></p>
         <div class="field" id="input-field"></div>
-        <div class="msg" id="input-msg"></div>
-        <div class="actions">
-          <button class="act" data-act="back">정정</button>
-          <button class="act go" data-act="ok">확인</button>
-        </div>
-        <div class="hint"><kbd>⌫</kbd> 지우기 · <kbd>Enter</kbd> 확인 · <kbd>Esc</kbd> 취소</div>
+        <div class="hint"><kbd>⌫</kbd> 지우기 · <kbd>Enter</kbd> 다음</div>
       </section>
 
       <!-- 확인 -->
       <section class="view" id="v-confirm">
-        <h1 id="confirm-title">거래 내용을 확인하세요</h1>
-        <p class="sub">맞으면 <b>Enter</b>, 아니면 <b>Esc</b></p>
+        <h1>거래 내용을 확인하세요</h1>
+        <p class="sub">맞으면 <b>다음</b>을 누르세요</p>
         <div class="receipt" id="confirm-rows"></div>
-        <div class="actions">
-          <button class="act" data-act="cancel">취소</button>
-          <button class="act go" data-act="ok">확인</button>
-        </div>
       </section>
 
       <!-- 처리 중 -->
@@ -310,29 +311,23 @@
         </div>
         <h1>현금을 받으세요</h1>
         <p class="sub" id="cash-sub"></p>
-        <div class="hint">아무 키나 누르면 처음 화면으로</div>
       </section>
 
       <!-- 결과 -->
       <section class="view" id="v-done">
-        <div class="badge" id="done-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></div>
+        <div class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></div>
         <h1 id="done-title"></h1>
         <div class="receipt" id="done-rows"></div>
-        <div class="count" id="done-count"></div>
-      </section>
-
-      <!-- 잠김 -->
-      <section class="view" id="v-lock">
-        <div class="badge red"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></div>
-        <h1>비밀번호 3회 오류</h1>
-        <p class="sub">카드 사용이 정지되었습니다.<br>가까운 영업점에 문의하세요.</p>
-        <div class="count" id="lock-count"></div>
       </section>
     </main>
 
     <footer class="bar">
-      <span id="foot-msg">카드를 넣고 거래를 선택하세요</span>
-      <button class="cancel" id="cancel" hidden>취소 (Esc)</button>
+      <span id="foot-msg"></span>
+      <nav class="nav">
+        <button class="nb" id="b-prev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>이전</button>
+        <button class="nb" id="b-home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg>홈으로</button>
+        <button class="nb go" id="b-next">다음<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button>
+      </nav>
     </footer>
   </div>
 </div>
@@ -341,19 +336,20 @@
 
 <script>
 (() => {
-  // 기본은 비밀번호 없이 바로 진행. 주소 뒤에 ?pin=123456 처럼 6자리를 붙이면 비밀번호를 물어봄
-  const qs = new URLSearchParams(location.search);
-  const PIN = /^\d{6}$/.test(qs.get('pin') || '') ? qs.get('pin') : null;
-  const PIN_LEN = 6;
-  const MAX_TRIES = 3;
   const IDLE_MS = 60000;
+  const PIN_LEN = 6;
+  const SAMPLE_ACCOUNT = '1102345678901';
+  const PRESETS = [10000, 30000, 50000, 100000, 300000];
+  const LABEL = { withdraw: '현금 인출', transfer: '송금 · 이체', balance: '잔액 조회', deposit: '입금' };
 
-  const state = { mode: null, tries: 0, balance: 1000000, amount: 0, account: '', pin: '', input: '' };
-  let view = 'home', inputCfg = null, timers = [], idle;
+  const state = { mode: null, balance: 1000000, amount: 0, account: '', pin: '', input: '' };
+  let stack = [];          // 지나온 화면들 (이전 버튼용)
+  let nextFn = null;       // 지금 화면에서 "다음"을 눌렀을 때 할 일
+  let inputCfg = null, pick = 0, view = 'home', timers = [], idle;
 
   const $ = (s) => document.querySelector(s);
   const won = (n) => n.toLocaleString('ko-KR') + '원';
-  const LABEL = { withdraw: '현금 인출', transfer: '송금 · 이체', balance: '잔액 조회', deposit: '입금' };
+  const fmtAcct = (v) => v.replace(/^(\d{3})(\d{3})(\d+)$/, '$1-$2-$3');
 
   // ---- 소리 ----
   let ac;
@@ -370,229 +366,203 @@
   const errBeep = () => { beep(220, .18, 'sawtooth'); setTimeout(() => beep(180, .25, 'sawtooth'), 200); };
   const okBeep = () => { beep(988, .08); setTimeout(() => beep(1319, .12), 90); };
 
-  // ---- 화면 전환 ----
+  // ---- 화면 / 이동 ----
   function later(fn, ms) { timers.push(setTimeout(fn, ms)); }
-  function show(name) {
+  function show(name, next, foot) {
     timers.forEach(clearTimeout); timers = [];
     document.querySelectorAll('.view').forEach(v => v.classList.toggle('on', v.id === 'v-' + name));
-    view = name;
-    $('#cancel').hidden = ['home', 'wait', 'cash', 'done', 'lock'].includes(name);
-    const foot = {
-      home: '카드를 넣고 거래를 선택하세요',
-      pin: '비밀번호는 다른 사람이 보지 않게 입력하세요',
-      card: '카드를 IC칩이 위로 오게 넣어 주세요',
-    }[name];
-    $('#foot-msg').textContent = foot || (state.mode ? LABEL[state.mode] + ' 진행 중' : '');
+    view = name; nextFn = next;
+    $('#foot-msg').textContent = foot || (state.mode ? LABEL[state.mode] : '');
+    $('#b-prev').disabled = name === 'home';
+    $('#b-home').disabled = name === 'home';
     focusCap(); resetIdle();
+  }
+  // 화면 하나 = 다시 그릴 수 있는 함수. go로 쌓고, 이전은 하나 빼고 다시 그림
+  function go(step) { stack.push(step); step(); }
+  function prev() {
+    if (view === 'wait') { stack[stack.length - 1](); return; }   // 처리 중이면 그 전 화면으로
+    if (stack.length > 1) stack.pop();
+    stack[stack.length - 1]();
   }
   function home() {
     Object.assign(state, { mode: null, amount: 0, account: '', pin: '', input: '' });
-    show('home');
+    stack = []; go(homeStep);
+  }
+  function next() { if (nextFn) nextFn(); }
+  // 결과 화면: 이전을 누르면 처음 화면 (같은 거래가 두 번 되지 않게)
+  function result(step) { stack = [homeStep]; go(step); }
+  // 처리 중 화면: 잠깐 보여주고 자동으로 넘어감 (다음을 누르면 바로)
+  function wait(title, then) {
+    $('#wait-title').textContent = title;
+    show('wait', then);
+    later(then, 1600);
   }
 
-  // ---- 비밀번호 ----
-  function startPin(mode) {
-    if (!PIN) { state.mode = mode; mode === 'withdraw' ? askCard('카드를 넣으면 인출이 시작됩니다') : afterPin(); return; }
-    state.mode = mode; state.pin = '';
-    $('#pin-msg').textContent = ''; $('#pin-msg').className = 'msg';
-    $('#pin-sub').innerHTML = `<b>${LABEL[mode]}</b> · 비밀번호 6자리를 누른 뒤 <b>Enter</b>`;
-    drawPin(); show('pin');
+  // ---- 처음 화면 ----
+  function homeStep() { show('home', () => choose('withdraw'), '원하시는 거래를 선택하세요'); }
+  function choose(mode) { beep(); state.mode = mode; go(pinStep); }
+
+  // ---- 비밀번호: 아무거나 넣어도(안 넣어도) 다음으로 ----
+  function pinStep() {
+    state.pin = '';
+    $('#pin-sub').innerHTML = `<b>${LABEL[state.mode]}</b> · 비밀번호 6자리를 입력하세요`;
+    drawPin();
+    show('pin', () => { okBeep(); afterPin(); }, '비밀번호는 다른 사람이 보지 않게 입력하세요');
   }
   function drawPin() {
     [...$('#pin-box').children].forEach((s, i) => {
-      s.textContent = i < state.pin.length ? '●' : '';
       s.classList.toggle('filled', i < state.pin.length);
       s.classList.toggle('cur', i === state.pin.length);
     });
   }
-  function checkPin() {
-    if (state.pin.length < PIN_LEN) {
-      $('#pin-msg').textContent = '비밀번호 6자리를 모두 입력하세요'; $('#pin-msg').className = 'msg err';
-      errBeep(); return;
-    }
-    if (state.pin === PIN) {
-      state.tries = 0;
-      okBeep();
-      state.mode === 'withdraw' ? askCard('비밀번호가 확인되었습니다') : later(afterPin, 400);
-      return;
-    }
-    state.tries++;
-    state.pin = ''; drawPin();
-    const box = $('#pin-box'); box.classList.remove('shake'); box.classList.add('err'); setTimeout(() => box.classList.remove('err'), 900); void box.offsetWidth; box.classList.add('shake');
-    errBeep();
-    if (state.tries >= MAX_TRIES) { lock(); return; }
-    $('#pin-msg').textContent = `비밀번호가 틀렸습니다 ${state.tries}회 실패!!`;
-    $('#pin-msg').className = 'msg err';
-  }
-  function lock() {
-    show('lock');
-    countdown('#lock-count', 8, () => { state.tries = 0; home(); });
-  }
-  function countdown(sel, sec, done) {
-    const tick = () => {
-      $(sel).textContent = `${sec}초 뒤 처음 화면으로 돌아갑니다`;
-      if (sec-- <= 0) return done();
-      later(tick, 1000);
-    };
-    tick();
-  }
-
-  // 카드 투입은 현금 인출에서만
-  function askCard(sub) { $('#card-sub').textContent = sub; show('card'); }
-  function cardIn() { beep(); wait('카드를 읽고 있습니다', afterPin); }
   function afterPin() {
     const m = state.mode;
-    if (m === 'withdraw') amountPicker('인출할 금액을 선택하세요');
-    else if (m === 'deposit') amountPicker('입금할 금액을 선택하세요');
-    else if (m === 'transfer') askNumber({
-      title: '받는 분 계좌번호를 입력하세요', sub: '숫자만 입력 (10~14자리)', ph: '계좌번호',
-      max: 14, fmt: (v) => v, check: (v) => v.length >= 10 || '계좌번호를 10자리 이상 입력하세요',
-      ok: (v) => { state.account = v; amountPicker('보낼 금액을 선택하세요'); },
-    });
-    else if (m === 'balance') wait('조회 중입니다', () => done('🧾', '잔액 조회', [
-      ['계좌', 'LEE\'S BANK 123-456-789012'],
-      ['현재 잔액', won(state.balance), true],
-    ]));
+    if (m === 'withdraw') go(cardStep);            // 카드 투입은 현금 인출에서만
+    else if (m === 'transfer') go(accountStep);
+    else if (m === 'deposit') go(amountStep);
+    else if (m === 'balance') wait('조회 중입니다', () => result(balanceStep));
   }
 
-  // ---- 금액 ----
-  const PRESETS = [10000, 30000, 50000, 100000, 300000];
-  function amountPicker(title) {
-    $('#amount-title').textContent = title;
-    const hasAll = state.mode !== 'deposit';
-    $('#amount-sub').textContent = `버튼 또는 키보드 숫자 1~${hasAll ? 7 : 6} · 잔액 ${won(state.balance)}`;
-    const box = $('#amounts'); box.innerHTML = '';
-    PRESETS.forEach((a, i) => box.appendChild(amountBtn(i + 1, (a / 10000) + '만원', () => pickAmount(a))));
-    box.appendChild(amountBtn(6, '직접 입력', () => askNumber({
-      title: '금액을 입력하세요', sub: '만원 단위로 입력 (예: 70000)', ph: '금액',
-      max: 8, fmt: (v) => v ? Number(v).toLocaleString('ko-KR') + ' 원' : '',
-      check: (v) => {
-        const n = Number(v);
-        if (!n) return '금액을 입력하세요';
-        if (n % 10000) return '만원 단위로만 가능합니다';
-        return true;
-      },
-      ok: (v) => pickAmount(Number(v)),
-    })));
-    if (hasAll) {
-      // 인출은 지폐로만 나오니 만원 단위까지, 송금은 잔액 전부
-      const all = state.mode === 'withdraw' ? Math.floor(state.balance / 10000) * 10000 : state.balance;
-      const b = amountBtn(7, `전액 <span class="all-amt">${won(all)}</span>`, () => pickAmount(all));
-      b.classList.add('all');
-      b.disabled = all <= 0;
-      box.appendChild(b);
-    }
-    show('amount');
+  // ---- 카드 투입 ----
+  function cardStep() {
+    show('card', () => { beep(); wait('카드를 읽고 있습니다', () => go(amountStep)); }, '카드를 IC칩이 위로 오게 넣어 주세요');
   }
-  function amountBtn(k, text, fn) {
-    const b = document.createElement('button');
-    b.innerHTML = `<span class="key">${k}</span>${text}`;
-    b.onclick = () => { beep(); fn(); };
-    b.dataset.k = k;
-    return b;
-  }
-  function pickAmount(a) {
-    const m = state.mode;
-    if (m !== 'deposit' && a > state.balance) {
-      errBeep();
-      $('#amount-sub').innerHTML = `<span style="color:var(--red);font-weight:600">잔액이 부족합니다 (잔액 ${won(state.balance)})</span>`;
-      if (view !== 'amount') show('amount');
-      return;
-    }
-    state.amount = a;
-    const rows = [['거래', LABEL[m]], ['금액', won(a), true]];
-    if (m === 'transfer') rows.splice(1, 0, ['받는 계좌', fmtAcct(state.account)]);
-    if (m !== 'deposit') rows.push(['수수료', '0원']);
-    confirm(rows);
-  }
-  const fmtAcct = (v) => v.replace(/^(\d{3})(\d{3})(\d+)$/, '$1-$2-$3');
 
-  // ---- 숫자 입력 ----
-  function askNumber(cfg) {
+  // ---- 숫자 입력 (계좌번호 / 직접 입력 금액) ----
+  function inputStep(cfg) {
     inputCfg = cfg; state.input = '';
     $('#input-title').textContent = cfg.title;
     $('#input-sub').textContent = cfg.sub;
-    $('#input-msg').textContent = '';
-    drawInput(); show('input');
+    drawInput();
+    show('input', () => { beep(); cfg.ok(state.input); });
   }
   function drawInput() {
-    const v = state.input, f = $('#input-field');
-    f.innerHTML = v ? `<span>${inputCfg.fmt(v)}</span><span class="caret"></span>` : `<span class="ph">${inputCfg.ph}</span><span class="caret"></span>`;
+    const v = state.input;
+    $('#input-field').innerHTML = (v ? `<span>${inputCfg.fmt(v)}</span>` : `<span class="ph">${inputCfg.ph}</span>`) + '<span class="caret"></span>';
   }
-  function submitInput() {
-    const r = inputCfg.check(state.input);
-    if (r !== true) { $('#input-msg').textContent = r; $('#input-msg').className = 'msg err'; errBeep(); return; }
-    beep(); inputCfg.ok(state.input);
+  function accountStep() {
+    inputStep({
+      title: '받는 분 계좌번호를 입력하세요', sub: '숫자만 입력하세요', ph: '계좌번호', max: 14,
+      fmt: (v) => v,
+      ok: (v) => { state.account = v || SAMPLE_ACCOUNT; go(amountStep); },
+    });
+  }
+  function customAmountStep() {
+    inputStep({
+      title: '금액을 입력하세요', sub: '원 단위로 입력하세요', ph: '금액', max: 8,
+      fmt: (v) => Number(v).toLocaleString('ko-KR') + ' 원',
+      ok: (v) => chooseAmount(Number(v) || PRESETS[0]),
+    });
   }
 
-  // ---- 확인 / 처리 / 결과 ----
+  // ---- 금액 선택 ----
+  const AMOUNT_TITLE = { withdraw: '인출할 금액을 선택하세요', transfer: '보낼 금액을 선택하세요', deposit: '입금할 금액을 선택하세요' };
+  function amountStep() {
+    const m = state.mode, hasAll = m !== 'deposit';
+    const all = m === 'withdraw' ? Math.floor(state.balance / 10000) * 10000 : state.balance;
+    $('#amount-title').textContent = AMOUNT_TITLE[m];
+    $('#amount-sub').textContent = `잔액 ${won(state.balance)}`;
+    const box = $('#amounts'); box.innerHTML = '';
+    const opts = PRESETS.map(a => [(a / 10000) + '만원', () => chooseAmount(a)]);
+    opts.push(['직접 입력', () => go(customAmountStep)]);
+    if (hasAll) opts.push([`전액 <span class="all-amt">${won(all)}</span>`, () => chooseAmount(all), 'all']);
+    pick = 0;
+    opts.forEach(([text, fn, cls], i) => {
+      const b = document.createElement('button');
+      b.innerHTML = `<span class="key">${i + 1}</span>${text}`;
+      b.dataset.k = i + 1;
+      if (cls) b.classList.add(cls);
+      b.onclick = () => { beep(); fn(); };
+      box.appendChild(b);
+    });
+    markPick();
+    // 아무것도 안 고르고 다음 → 표시된 금액(처음엔 1만원)
+    show('amount', () => box.children[pick].click());
+  }
+  function markPick() { [...$('#amounts').children].forEach((b, i) => b.classList.toggle('picked', i === pick)); }
+  function chooseAmount(a) {
+    if (state.mode !== 'deposit' && a > state.balance) {
+      errBeep();
+      $('#amount-sub').innerHTML = `<span style="color:var(--red);font-weight:600">잔액이 부족합니다 (잔액 ${won(state.balance)})</span>`;
+      if (view !== 'amount') prev();
+      return;
+    }
+    state.amount = a;
+    go(confirmStep);
+  }
+
+  // ---- 확인 ----
   function rowsHtml(rows) {
     return rows.map(([k, v, big]) => `<div class="row"><span>${k}</span><b class="${big ? 'big' : ''}">${v}</b></div>`).join('');
   }
-  function confirm(rows) { $('#confirm-rows').innerHTML = rowsHtml(rows); show('confirm'); }
-  function wait(title, then) { $('#wait-title').textContent = title; show('wait'); later(then, 1600); }
-  function done(ico, title, rows) {
-    $('#done-title').textContent = title;
-    $('#done-rows').innerHTML = rowsHtml(rows);
-    okBeep(); show('done');
-    countdown('#done-count', 8, home);
+  function confirmStep() {
+    const m = state.mode, rows = [['거래', LABEL[m]], ['금액', won(state.amount), true]];
+    if (m === 'transfer') rows.splice(1, 0, ['받는 계좌', fmtAcct(state.account)]);
+    if (m !== 'deposit') rows.push(['수수료', '0원']);
+    $('#confirm-rows').innerHTML = rowsHtml(rows);
+    show('confirm', () => { beep(); commit(); });
   }
+
+  // ---- 처리 / 결과 ----
   function commit() {
     const { mode: m, amount: a } = state;
-    if (m === 'withdraw') wait('현금을 세고 있습니다', () => {
-      state.balance -= a;
-      $('#cash-sub').textContent = `${won(a)} · 남은 잔액 ${won(state.balance)}`;
-      show('cash');
-      for (let i = 0; i < 6; i++) later(() => beep(140 + (i % 2) * 40, .09, 'square', .05), 300 + i * 110);
-      later(okBeep, 1300);
-      later(home, 12000);
-    });
+    if (m === 'withdraw') wait('현금을 세고 있습니다', () => { state.balance -= a; result(cashStep); });
     else if (m === 'transfer') wait('송금 중입니다', () => {
       state.balance -= a;
-      done('📤', '송금이 완료되었습니다', [['받는 계좌', fmtAcct(state.account)], ['보낸 금액', won(a), true], ['남은 잔액', won(state.balance)]]);
+      result(doneStep('송금이 완료되었습니다', [['받는 계좌', fmtAcct(state.account)], ['보낸 금액', won(a), true], ['남은 잔액', won(state.balance)]]));
     });
     else if (m === 'deposit') wait('현금을 확인하고 있습니다', () => {
       state.balance += a;
-      done('📥', '입금이 완료되었습니다', [['입금액', won(a), true], ['잔액', won(state.balance)]]);
+      result(doneStep('입금이 완료되었습니다', [['입금액', won(a), true], ['잔액', won(state.balance)]]));
     });
+  }
+  function cashStep() {
+    $('#cash-sub').textContent = `${won(state.amount)} · 남은 잔액 ${won(state.balance)}`;
+    show('cash', home, '현금과 카드를 꼭 챙기세요');
+    for (let i = 0; i < 6; i++) later(() => beep(140 + (i % 2) * 40, .09, 'square', .05), 300 + i * 110);
+    later(okBeep, 1300);
+  }
+  function balanceStep() {
+    doneStep('잔액 조회', [['계좌', "LEE'S BANK 123-456-789012"], ['현재 잔액', won(state.balance), true]])();
+  }
+  function doneStep(title, rows) {
+    return () => {
+      $('#done-title').textContent = title;
+      $('#done-rows').innerHTML = rowsHtml(rows);
+      okBeep();
+      show('done', home, '이용해 주셔서 감사합니다');
+    };
   }
 
   // ---- 키보드 ----
   function onKey(key) {
     resetIdle();
-    if (key === 'Escape') { if (!$('#cancel').hidden) { beep(440); home(); } return; }
     const digit = /^[0-9]$/.test(key) ? key : null;
-    const enter = key === 'Enter';
     const back = key === 'Backspace' || key === 'Delete';
+    if (key === 'Escape') { if (view !== 'home') { beep(440); home(); } return; }
+    if (key === 'Enter' || key === 'ArrowRight') { next(); return; }
+    if (key === 'ArrowLeft') { if (view !== 'home') { beep(660); prev(); } return; }
 
     if (view === 'home') {
       const b = digit && document.querySelectorAll('#v-home .menu button')[Number(digit) - 1];
       if (b) press(b);
     } else if (view === 'pin') {
-      if (digit && state.pin.length < PIN_LEN) { state.pin += digit; beep(); drawPin(); $('#pin-msg').textContent = ''; }
+      if (digit && state.pin.length < PIN_LEN) { state.pin += digit; beep(); drawPin(); }
       else if (back && state.pin) { state.pin = state.pin.slice(0, -1); beep(660); drawPin(); }
-      else if (enter) checkPin();
-    } else if (view === 'card') {
-      if (enter) cardIn();
     } else if (view === 'amount') {
       const b = digit && $(`#amounts button[data-k="${digit}"]`);
-      if (b && !b.disabled) press(b);
+      if (b) press(b);
     } else if (view === 'input') {
       if (digit && state.input.length < inputCfg.max && !(digit === '0' && !state.input && inputCfg.ph === '금액')) {
-        state.input += digit; beep(); drawInput(); $('#input-msg').textContent = '';
+        state.input += digit; beep(); drawInput();
       } else if (back && state.input) { state.input = state.input.slice(0, -1); beep(660); drawInput(); }
-      else if (enter) submitInput();
-    } else if (view === 'confirm') {
-      if (enter) { beep(); commit(); }
-    } else if (view === 'cash' || view === 'done') {
-      home();
     }
   }
   function press(b) { b.classList.add('press'); setTimeout(() => b.classList.remove('press'), 120); b.click(); }
 
   document.addEventListener('keydown', (e) => {
     if (e.metaKey || e.ctrlKey || e.altKey) return;
-    if (['Enter', 'Escape', 'Backspace', 'Delete', ' '].includes(e.key) || /^[0-9]$/.test(e.key)) e.preventDefault();
+    if (['Enter', 'Escape', 'Backspace', 'Delete', ' ', 'ArrowLeft', 'ArrowRight'].includes(e.key) || /^[0-9]$/.test(e.key)) e.preventDefault();
     onKey(e.key);
   });
 
@@ -603,16 +573,10 @@
   document.addEventListener('pointerdown', () => setTimeout(focusCap, 0));
 
   // ---- 버튼 ----
-  document.querySelectorAll('[data-go]').forEach(b => b.addEventListener('click', () => { beep(); startPin(b.dataset.go); }));
-  document.querySelectorAll('[data-act]').forEach(b => b.addEventListener('click', () => {
-    const a = b.dataset.act;
-    if (a === 'cancel') { beep(440); home(); }
-    else if (a === 'back') { state.input = ''; drawInput(); beep(660); }
-    else if (a === 'ok') onKey('Enter');
-  }));
-  $('#cancel').addEventListener('click', () => { beep(440); home(); });
-  document.querySelectorAll('#v-cash, #v-done').forEach(v => v.addEventListener('click', home));
-  $('#v-card').addEventListener('click', cardIn);
+  document.querySelectorAll('[data-go]').forEach(b => b.addEventListener('click', () => choose(b.dataset.go)));
+  $('#b-next').addEventListener('click', () => { beep(); next(); });
+  $('#b-prev').addEventListener('click', () => { beep(660); prev(); });
+  $('#b-home').addEventListener('click', () => { beep(440); home(); });
 
   // ---- 시계 / 자동 복귀 ----
   function clock() {
@@ -623,7 +587,7 @@
   clock(); setInterval(clock, 10000);
   function resetIdle() { clearTimeout(idle); idle = setTimeout(() => { if (view !== 'home') home(); }, IDLE_MS); }
 
-  show('home');
+  home();
 })();
 </script>
 </body>
