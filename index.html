@@ -199,6 +199,7 @@
   }
   .badge svg { width: 36px; height: 36px; }
   .badge.red { background: #fdecec; color: var(--red); }
+  .badge[hidden] { display: none; }
   .count { margin-top: 22px; color: #9ca3af; font-size: 14px; }
 
   footer.bar {
@@ -315,7 +316,8 @@
 
       <!-- 결과 -->
       <section class="view" id="v-done">
-        <div class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></div>
+        <div class="badge" id="done-ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></div>
+        <div class="badge red" id="done-no" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 7v6M12 17h.01"/></svg></div>
         <h1 id="done-title"></h1>
         <div class="receipt" id="done-rows"></div>
       </section>
@@ -511,9 +513,9 @@
       state.balance -= a;
       result(doneStep('송금이 완료되었습니다', [['받는 계좌', fmtAcct(state.account)], ['보낸 금액', won(a), true], ['남은 잔액', won(state.balance)]]));
     });
+    // 입금은 끝까지 가도 실제로는 안 되고 안내만 뜸 (잔액 그대로)
     else if (m === 'deposit') wait('현금을 확인하고 있습니다', () => {
-      state.balance += a;
-      result(doneStep('입금이 완료되었습니다', [['입금액', won(a), true], ['잔액', won(state.balance)]]));
+      result(doneStep('입금은 불가능합니다!!!', [['입금 요청액', won(a)], ['잔액', won(state.balance), true]], true));
     });
   }
   function cashStep() {
@@ -525,12 +527,15 @@
   function balanceStep() {
     doneStep('잔액 조회', [['계좌', "LEE'S BANK 123-456-789012"], ['현재 잔액', won(state.balance), true]])();
   }
-  function doneStep(title, rows) {
+  function doneStep(title, rows, fail) {
     return () => {
       $('#done-title').textContent = title;
+      $('#done-title').style.color = fail ? 'var(--red)' : '';
+      $('#done-ok').hidden = !!fail;
+      $('#done-no').hidden = !fail;
       $('#done-rows').innerHTML = rowsHtml(rows);
-      okBeep();
-      show('done', home, '이용해 주셔서 감사합니다');
+      fail ? errBeep() : okBeep();
+      show('done', home, fail ? '입금 서비스를 이용할 수 없습니다' : '이용해 주셔서 감사합니다');
     };
   }
 
