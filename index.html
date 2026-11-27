@@ -141,12 +141,25 @@
 
   /* 금액 */
   .amounts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; width: min(820px, 100%); }
-  .amounts button { min-height: 92px; font-size: clamp(19px, 2.2vw, 24px); font-weight: 700; }
+  .amounts button { min-height: 80px; font-size: clamp(19px, 2.2vw, 24px); font-weight: 700; }
   .amounts .key { top: 10px; left: 14px; right: auto; }
-  .amounts button.all { grid-column: 1 / -1; min-height: 76px; gap: 12px; border-color: #c7d2fe; background: var(--blue-soft); color: var(--blue); display: flex; align-items: center; justify-content: center; }
-  .amounts button.all:active, .amounts button.all.press { background: #dbe6ff; border-color: var(--blue); }
-  .amounts button.all:disabled { opacity: .4; cursor: default; }
-  .all-amt { font-size: .8em; font-weight: 600; opacity: .8; }
+  .amounts button.all {
+    grid-column: 1 / -1; min-height: 88px; gap: 14px; margin-top: 6px;
+    display: flex; align-items: center; justify-content: center;
+    background: linear-gradient(135deg, #3b82f6, var(--blue)); border-color: var(--blue); color: #fff;
+    font-size: clamp(22px, 2.6vw, 28px); font-weight: 800;
+    box-shadow: 0 8px 22px rgba(37, 99, 235, .35);
+    animation: glow 1.8s ease-in-out infinite;
+  }
+  .amounts button.all .key { color: rgba(255,255,255,.7); }
+  .amounts button.all svg { width: 28px; height: 28px; }
+  .amounts button.all:hover { border-color: var(--blue); }
+  .amounts button.all:active, .amounts button.all.press { background: var(--blue); filter: brightness(.92); }
+  .amounts button.all.picked { outline: 3px solid #93c5fd; outline-offset: 3px; }
+  .amounts button.all:disabled { opacity: .4; cursor: default; animation: none; box-shadow: none; }
+  #v-amount .sub { margin-bottom: 24px; }
+  .all-amt { font-size: .72em; font-weight: 700; background: rgba(255,255,255,.2); padding: 4px 12px; border-radius: 999px; }
+  @keyframes glow { 50% { box-shadow: 0 8px 30px rgba(37, 99, 235, .6); transform: translateY(-1px); } }
 
   .actions { display: flex; gap: 12px; margin-top: 28px; }
   .act {
@@ -477,7 +490,8 @@
     const box = $('#amounts'); box.innerHTML = '';
     const opts = PRESETS.map(a => [(a / 10000) + '만원', () => chooseAmount(a)]);
     opts.push(['직접 입력', () => go(customAmountStep)]);
-    if (hasAll) opts.push([`전액 <span class="all-amt">${won(all)}</span>`, () => chooseAmount(all), 'all']);
+    const allIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="19" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/></svg>';
+    if (hasAll) opts.push([`${allIcon}${m === 'withdraw' ? '전액 뽑기' : '전액 보내기'} <span class="all-amt">${won(all)}</span>`, () => chooseAmount(all), 'all']);
     pick = 0;
     opts.forEach(([text, fn, cls], i) => {
       const b = document.createElement('button');
