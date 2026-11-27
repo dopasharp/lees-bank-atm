@@ -339,7 +339,7 @@
         <div class="card-anim"><div class="card-slot"></div><div class="card"><i></i></div></div>
         <h1>카드를 투입하세요</h1>
         <p class="sub" id="card-sub"></p>
-        <div class="hint">카드를 넣은 뒤 <b>다음</b>을 누르세요</div>
+        <div class="hint">카드를 넣고 잠시만 기다려 주세요</div>
       </section>
 
       <!-- 금액 선택 -->
@@ -457,6 +457,7 @@
     $('#foot-msg').textContent = foot || (state.mode ? LABEL[state.mode] : '');
     $('#b-prev').disabled = name === 'home';
     $('#b-home').disabled = name === 'home';
+    $('#b-next').disabled = !next;
     focusCap(); resetIdle();
   }
   // 화면 하나 = 다시 그릴 수 있는 함수. go로 쌓고, 이전은 하나 빼고 다시 그림
@@ -509,8 +510,8 @@
   // 카드 투입은 현금 인출에서만, 거래 확인 다음 맨 마지막
   function cardStep() {
     $('#card-sub').innerHTML = `인출 금액 <b>${won(state.amount)}</b>`;
-    show('card', celebrate, '카드를 IC칩이 위로 오게 넣어 주세요');
-    later(celebrate, 10000);   // 10초 뒤 미션 성공!
+    show('card', null, '카드를 IC칩이 위로 오게 넣어 주세요');   // 다음 눌러도 안 넘어감
+    later(celebrate, 10000);   // 꼭 10초 기다린 뒤 미션 성공!
   }
 
   // ---- 숫자 입력 (계좌번호) ----
