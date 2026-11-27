@@ -158,6 +158,12 @@
   .amounts button.all.picked { outline: 3px solid #93c5fd; outline-offset: 3px; }
   .amounts button.all:disabled { opacity: .4; cursor: default; animation: none; box-shadow: none; }
   #v-amount .sub { margin-bottom: 24px; }
+  .amt-err {
+    margin: 0 0 20px; padding: 8px 22px; border-radius: 14px;
+    background: #fdecec; color: var(--red); font-size: clamp(18px, 2vw, 22px); font-weight: 800;
+  }
+  .amt-err[hidden] { display: none; }
+  .amt-err.shake { animation: shake .4s; }
   .all-amt { font-size: .72em; font-weight: 700; background: rgba(255,255,255,.2); padding: 4px 12px; border-radius: 999px; }
   @keyframes glow { 50% { box-shadow: 0 8px 30px rgba(37, 99, 235, .6); transform: translateY(-1px); } }
 
@@ -346,6 +352,7 @@
       <section class="view" id="v-amount">
         <h1 id="amount-title"></h1>
         <p class="sub" id="amount-sub"></p>
+        <div class="amt-err" id="amt-err" hidden>⚠️ 금액이 맞지 않아 출금할 수 없습니다</div>
         <div class="amounts" id="amounts"></div>
       </section>
 
@@ -544,8 +551,9 @@
     const box = $('#amounts'); box.innerHTML = '';
     const opts = PRESETS.map(a => [(a / 10000) + '만원', () => chooseAmount(a)]);
     const allIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="19" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/></svg>';
-    if (hasAll) opts.push([`${allIcon}${m === 'withdraw' ? '전액 뽑기' : '전액 보내기'} <span class="all-amt">${won(all)}</span>`, () => chooseAmount(all), 'all']);
-    pick = 0;
+    if (hasAll) opts.push([`${allIcon}${m === 'withdraw' ? '전액 뽑기' : '전액 보내기'} <span class="all-amt">${won(all)}</span>`, () => chooseAmount(all, true), 'all']);
+    pick = hasAll && m === 'withdraw' ? opts.length - 1 : 0;   // 인출은 전액이 기본
+    $('#amt-err').hidden = true; $('#amount-sub').hidden = false;
     opts.forEach(([text, fn, cls], i) => {
       const b = document.createElement('button');
       b.innerHTML = `<span class="key">${i + 1}</span>${text}`;
@@ -559,7 +567,14 @@
     show('amount', () => box.children[pick].click());
   }
   function markPick() { [...$('#amounts').children].forEach((b, i) => b.classList.toggle('picked', i === pick)); }
-  function chooseAmount(a) {
+  function chooseAmount(a, isAll) {
+    // 인출은 전액만 가능
+    if (state.mode === 'withdraw' && !isAll) {
+      errBeep();
+      const e = $('#amt-err'); e.hidden = false; $('#amount-sub').hidden = true;
+      e.classList.remove('shake'); void e.offsetWidth; e.classList.add('shake');
+      return;
+    }
     if (state.mode !== 'deposit' && a > state.balance) {
       errBeep();
       $('#amount-sub').innerHTML = `<span style="color:var(--red);font-weight:600">잔액이 부족합니다 (잔액 ${won(state.balance)})</span>`;
