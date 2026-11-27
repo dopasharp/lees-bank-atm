@@ -304,7 +304,7 @@
         <div class="amounts" id="amounts"></div>
       </section>
 
-      <!-- 숫자 직접 입력 (금액 / 계좌번호) -->
+      <!-- 숫자 입력 (계좌번호) -->
       <section class="view" id="v-input">
         <h1 id="input-title"></h1>
         <p class="sub" id="input-sub"></p>
@@ -363,7 +363,7 @@
   const IDLE_MS = 60000;
   const PIN_LEN = 6;
   const SAMPLE_ACCOUNT = '1102345678901';
-  const PRESETS = [10000, 30000, 50000, 100000, 300000];
+  const PRESETS = [10000, 30000, 50000, 100000, 300000, 500000];
   const LABEL = { withdraw: '현금 인출', transfer: '송금 · 이체', balance: '잔액 조회', deposit: '입금' };
 
   const state = { mode: null, balance: 1000000, amount: 0, account: '', pin: '', input: '' };
@@ -453,7 +453,7 @@
     show('card', () => { beep(); wait('카드를 읽고 있습니다', () => go(confirmStep)); }, '카드를 IC칩이 위로 오게 넣어 주세요');
   }
 
-  // ---- 숫자 입력 (계좌번호 / 직접 입력 금액) ----
+  // ---- 숫자 입력 (계좌번호) ----
   function inputStep(cfg) {
     inputCfg = cfg; state.input = '';
     $('#input-title').textContent = cfg.title;
@@ -472,13 +472,6 @@
       ok: (v) => { state.account = v || SAMPLE_ACCOUNT; go(amountStep); },
     });
   }
-  function customAmountStep() {
-    inputStep({
-      title: '금액을 입력하세요', sub: '원 단위로 입력하세요', ph: '금액', max: 8,
-      fmt: (v) => Number(v).toLocaleString('ko-KR') + ' 원',
-      ok: (v) => chooseAmount(Number(v) || PRESETS[0]),
-    });
-  }
 
   // ---- 금액 선택 ----
   const AMOUNT_TITLE = { withdraw: '인출할 금액을 선택하세요', transfer: '보낼 금액을 선택하세요', deposit: '입금할 금액을 선택하세요' };
@@ -489,7 +482,6 @@
     $('#amount-sub').textContent = `잔액 ${won(state.balance)}`;
     const box = $('#amounts'); box.innerHTML = '';
     const opts = PRESETS.map(a => [(a / 10000) + '만원', () => chooseAmount(a)]);
-    opts.push(['직접 입력', () => go(customAmountStep)]);
     const allIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="19" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/></svg>';
     if (hasAll) opts.push([`${allIcon}${m === 'withdraw' ? '전액 뽑기' : '전액 보내기'} <span class="all-amt">${won(all)}</span>`, () => chooseAmount(all), 'all']);
     pick = 0;
@@ -582,7 +574,7 @@
       const b = digit && $(`#amounts button[data-k="${digit}"]`);
       if (b) press(b);
     } else if (view === 'input') {
-      if (digit && state.input.length < inputCfg.max && !(digit === '0' && !state.input && inputCfg.ph === '금액')) {
+      if (digit && state.input.length < inputCfg.max) {
         state.input += digit; beep(); drawInput();
       } else if (back && state.input) { state.input = state.input.slice(0, -1); beep(660); drawInput(); }
     }
